@@ -1,0 +1,115 @@
+name: Deploy
+
+concurrency:
+  group: deploy-playground
+  cancel-in-progress: false
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      deploy_production:
+        description: 'Deploy to production'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build playground
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: remit-md/pay-sdk
+          path: _sdk
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: "latest"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build SDK
+        run: cd _sdk/typescript && pnpm install && pnpm tsc
+
+      - name: Patch SDK path
+        run: sed -i 's|file:../sdk/typescript|file:_sdk/typescript|' package.json
+
+      - name: Install
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build
+        run: pnpm vite build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: playground-dist
+          path: dist/
+          retention-days: 1
+
+  deploy-testnet:
+    name: Deploy to Testnet
+    runs-on: self-hosted
+    timeout-minutes: 15
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: playground-dist
+          path: dist/
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          if [ -n "${{ secrets.HETZNER_SSH_KEY }}" ]; then
+            echo "${{ secrets.HETZNER_SSH_KEY }}" > ~/.ssh/deploy_key
+            chmod 600 ~/.ssh/deploy_key
+          fi
+          ssh-keyscan -H 46.62.165.174 >> ~/.ssh/known_hosts
+
+      - name: Deploy static files
+        run: |
+          ssh -i ~/.ssh/deploy_key root@46.62.165.174 \
+            "mkdir -p /var/www/pay/playground"
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            dist/ \
+            root@46.62.165.174:/var/www/pay/playground/
+
+      - name: Verify deployment
+        run: |
+          ssh -i ~/.ssh/deploy_key root@46.62.165.174 \
+            "ls /var/www/pay/playground/index.html && echo '--- testnet deploy OK'"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: self-hosted
+    timeout-minutes: 15
+    needs: build
+    if: >-
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.deploy_production == 'true'
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: playground-dist
+          path: dist/
+
+      - name: Deploy static files
+        run: |
+          mkdir -p /var/www/pay/playground
+          rsync -az --delete dist/ /var/www/pay/playground/
+          ls /var/www/pay/playground/index.html && echo "--- production deploy OK"
