@@ -33,7 +33,7 @@ const apiOverride =
 
 const configs: Record<Network, NetworkConfig> = {
   testnet: {
-    apiUrl: apiOverride || "https://testnet1.remit.md/api/v1",
+    apiUrl: apiOverride || "https://testnet.pay-skill.com/api/v1",
     chain: "base-sepolia",
     chainId: 84532,
     routerAddress: "", // Fetched from /contracts on init
