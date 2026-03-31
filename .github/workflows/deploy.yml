@@ -12,6 +12,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PROD_HOST: 204.168.133.111
+
 jobs:
   build:
     name: Build playground
@@ -53,7 +56,7 @@ jobs:
 
   deploy:
     name: Deploy to Production
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: build
     if: github.ref == 'refs/heads/main'
@@ -64,8 +67,23 @@ jobs:
           name: playground-dist
           path: dist/
 
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.CI_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ env.PROD_HOST }} >> ~/.ssh/known_hosts
+
       - name: Deploy static files
         run: |
-          mkdir -p /var/www/pay/playground
-          rsync -az --delete dist/ /var/www/pay/playground/
-          ls /var/www/pay/playground/index.html && echo "--- production deploy OK"
+          ssh -i ~/.ssh/deploy_key root@${{ env.PROD_HOST }} \
+            "mkdir -p /var/www/pay/playground"
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            dist/ \
+            root@${{ env.PROD_HOST }}:/var/www/pay/playground/
+
+      - name: Verify deployment
+        run: |
+          ssh -i ~/.ssh/deploy_key root@${{ env.PROD_HOST }} \
+            "ls /var/www/pay/playground/index.html && echo '--- production deploy OK'"
