@@ -109,54 +109,19 @@ export async function signRequest(
 // ── Fund popup ──────────────────────────────────────────────────────────────
 
 /**
- * Open a fund-link popup for the given wallet.
- * Creates a one-time fund link via the SDK, opens it in a popup window,
- * and returns a Promise that resolves when the popup is closed.
+ * Open the dashboard fund page in a popup for the given wallet.
  */
-export async function openFundPopup(wallet: Wallet, isTestnet: boolean): Promise<void> {
-  const link = await wallet.createFundLink({
-    agentName: "Playground V2",
-    messages: [
-      {
-        role: "system",
-        text: "Your agent is requesting funds. Wallet verified on Base L2. Choose a payment method to fund.",
-      },
-      {
-        role: "agent",
-        text: isTestnet
-          ? "This is the pay interactive playground. I need a small amount of testnet USDC to demonstrate payment flows - escrow, streaming, tabs, and bounties."
-          : "This is the pay interactive playground on Base mainnet. Fund this wallet with real USDC to test payment flows.",
-      },
-      {
-        role: "agent",
-        text: isTestnet
-          ? "Mint free testnet USDC using the Mint tab. Any amount works - $100 is enough to try all seven flows."
-          : "Any amount works - $10 is enough to test all seven flows.",
-      },
-      {
-        role: "agent",
-        text: "Funds stay in your agent wallet and you can withdraw anytime from the Withdraw page.",
-      },
-    ],
-  });
-
-  let fundUrl = link.url;
+export function openFundPopup(wallet: Wallet, isTestnet: boolean): Promise<void> {
+  let fundUrl = wallet.createFundLink();
   if (isTestnet) {
     fundUrl += (fundUrl.includes("?") ? "&" : "?") + "testnet";
   }
 
   const popup = window.open(fundUrl, "pay-fund", "width=1040,height=700,left=100,top=60");
-
   return new Promise<void>((resolve) => {
-    if (!popup) {
-      resolve();
-      return;
-    }
+    if (!popup) { resolve(); return; }
     const timer = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(timer);
-        resolve();
-      }
+      if (popup.closed) { clearInterval(timer); resolve(); }
     }, 500);
   });
 }
