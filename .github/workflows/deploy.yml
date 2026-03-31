@@ -87,3 +87,13 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key root@${{ env.PROD_HOST }} \
             "ls /var/www/pay/playground/index.html && echo '--- production deploy OK'"
+
+      - name: Smoke test API connectivity
+        run: |
+          echo "Checking testnet API..."
+          curl -sf https://testnet.pay-skill.com/api/v1/contracts || { echo "FAIL: testnet API unreachable"; exit 1; }
+          echo "Checking production API proxy..."
+          curl -sf https://pay-skill.com/api/v1/contracts || { echo "FAIL: production API proxy unreachable"; exit 1; }
+          echo "Checking playground page loads..."
+          curl -sf https://pay-skill.com/playground/ | grep -q 'index-' || { echo "FAIL: playground page not loading"; exit 1; }
+          echo "--- all smoke tests passed"
