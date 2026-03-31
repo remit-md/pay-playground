@@ -111,12 +111,8 @@ export async function signRequest(
 /**
  * Open the dashboard fund page in a popup for the given wallet.
  */
-export function openFundPopup(wallet: Wallet, isTestnet: boolean): Promise<void> {
-  let fundUrl = wallet.createFundLink();
-  if (isTestnet) {
-    fundUrl += (fundUrl.includes("?") ? "&" : "?") + "testnet";
-  }
-
+export async function openFundPopup(wallet: Wallet, _isTestnet: boolean): Promise<void> {
+  const fundUrl = await wallet.createFundLink();
   const popup = window.open(fundUrl, "pay-fund", "width=1040,height=700,left=100,top=60");
   return new Promise<void>((resolve) => {
     if (!popup) { resolve(); return; }
