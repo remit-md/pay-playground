@@ -21,6 +21,15 @@ export default defineConfig({
     "process.env": "{}",
     global: "globalThis",
   },
+  server: {
+    proxy: {
+      "/proxy-api": {
+        target: "http://204.168.133.111:3001",
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/proxy-api/, "/api/v1"),
+      },
+    },
+  },
   build: {
     outDir: "dist",
   },
