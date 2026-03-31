@@ -111,8 +111,31 @@ export async function signRequest(
 /**
  * Open the dashboard fund page in a popup for the given wallet.
  */
-export async function openFundPopup(wallet: Wallet, _isTestnet: boolean): Promise<void> {
-  const fundUrl = await wallet.createFundLink();
+export async function openFundPopup(wallet: Wallet, isTestnet: boolean): Promise<void> {
+  let fundUrl = await wallet.createFundLink({
+    agentName: "Playground",
+    messages: [
+      {
+        role: "agent",
+        text: isTestnet
+          ? "This is the pay interactive playground. I need testnet USDC to demonstrate payment flows — direct payments, tabs, and x402 paywalls."
+          : "This is the pay interactive playground on Base mainnet. Fund this wallet with real USDC to test payment flows.",
+      },
+      {
+        role: "agent",
+        text: isTestnet
+          ? "Mint free testnet USDC using the Mint tab. Any amount works — $100 is enough to try all three flows."
+          : "Any amount works — $10 is enough to test all three flows.",
+      },
+      {
+        role: "agent",
+        text: "Funds stay in your agent wallet and you can withdraw anytime from the Withdraw page.",
+      },
+    ],
+  });
+  if (isTestnet) {
+    fundUrl += (fundUrl.includes("?") ? "&" : "?") + "testnet";
+  }
   const popup = window.open(fundUrl, "pay-fund", "width=1040,height=700,left=100,top=60");
   return new Promise<void>((resolve) => {
     if (!popup) { resolve(); return; }
