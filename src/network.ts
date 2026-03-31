@@ -21,8 +21,15 @@ export interface NetworkConfig {
   storagePrefix: string;
 }
 
-// Allow overriding API URL via ?api= query param or VITE_API_URL env var.
-const apiOverride = params.get("api") || import.meta.env.VITE_API_URL || "";
+// Allow overriding API URL via ?api= query param, VITE_API_URL env var, or localStorage.
+// Once set via ?api=, persists in localStorage so refreshes/retries keep working.
+const apiParam = params.get("api");
+if (apiParam) localStorage.setItem("pay-playground-api-override", apiParam);
+const apiOverride =
+  apiParam ||
+  localStorage.getItem("pay-playground-api-override") ||
+  import.meta.env.VITE_API_URL ||
+  "";
 
 const configs: Record<Network, NetworkConfig> = {
   testnet: {
