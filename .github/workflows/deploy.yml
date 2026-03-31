@@ -59,7 +59,7 @@ jobs:
 
   deploy-testnet:
     name: Deploy to Testnet
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: build
     if: github.ref == 'refs/heads/main'
