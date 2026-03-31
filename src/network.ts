@@ -21,9 +21,12 @@ export interface NetworkConfig {
   storagePrefix: string;
 }
 
+// Allow overriding API URL via ?api= query param or VITE_API_URL env var.
+const apiOverride = params.get("api") || import.meta.env.VITE_API_URL || "";
+
 const configs: Record<Network, NetworkConfig> = {
   testnet: {
-    apiUrl: "https://testnet.pay-skill.com/api/v1",
+    apiUrl: apiOverride || "https://testnet.pay-skill.com/api/v1",
     chain: "base-sepolia",
     chainId: 84532,
     routerAddress: "", // Fetched from /contracts on init
