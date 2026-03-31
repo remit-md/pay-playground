@@ -7,13 +7,7 @@ concurrency:
 on:
   push:
     branches: [main]
-  workflow_dispatch:
-    inputs:
-      deploy_production:
-        description: 'Deploy to production'
-        required: false
-        default: false
-        type: boolean
+  workflow_dispatch: {}
 
 permissions:
   contents: read
@@ -57,50 +51,12 @@ jobs:
           path: dist/
           retention-days: 1
 
-  deploy-testnet:
-    name: Deploy to Testnet
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: build
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: playground-dist
-          path: dist/
-
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          if [ -n "${{ secrets.HETZNER_SSH_KEY }}" ]; then
-            echo "${{ secrets.HETZNER_SSH_KEY }}" > ~/.ssh/deploy_key
-            chmod 600 ~/.ssh/deploy_key
-          fi
-          ssh-keyscan -H 46.62.165.174 >> ~/.ssh/known_hosts
-
-      - name: Deploy static files
-        run: |
-          ssh -i ~/.ssh/deploy_key root@46.62.165.174 \
-            "mkdir -p /var/www/pay/playground"
-          rsync -az --delete \
-            -e "ssh -i ~/.ssh/deploy_key" \
-            dist/ \
-            root@46.62.165.174:/var/www/pay/playground/
-
-      - name: Verify deployment
-        run: |
-          ssh -i ~/.ssh/deploy_key root@46.62.165.174 \
-            "ls /var/www/pay/playground/index.html && echo '--- testnet deploy OK'"
-
-  deploy-production:
+  deploy:
     name: Deploy to Production
     runs-on: self-hosted
     timeout-minutes: 15
     needs: build
-    if: >-
-      github.event_name == 'workflow_dispatch' &&
-      github.event.inputs.deploy_production == 'true'
+    if: github.ref == 'refs/heads/main'
     steps:
       - name: Download dist artifact
         uses: actions/download-artifact@v4
