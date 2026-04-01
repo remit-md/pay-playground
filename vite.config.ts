@@ -1,6 +1,14 @@
 import { defineConfig } from "vite";
 import { resolve } from "path";
+import { existsSync } from "fs";
 import tailwindcss from "@tailwindcss/vite";
+
+// Resolve SDK from local sibling (dev) or CI checkout (_sdk)
+const sdkPaths = [
+  resolve(__dirname, "../sdk/typescript/dist/index.js"),  // local dev
+  resolve(__dirname, "_sdk/typescript/dist/index.js"),     // CI
+];
+const sdkPath = sdkPaths.find(existsSync);
 
 export default defineConfig({
   base: "/playground/",
@@ -14,7 +22,7 @@ export default defineConfig({
       "node:path": resolve(__dirname, "src/shims/path.ts"),
       "node:os": resolve(__dirname, "src/shims/os.ts"),
       buffer: resolve(__dirname, "src/shims/buffer.ts"),
-      "@pay-skill/sdk": resolve(__dirname, "../sdk/typescript/dist/index.js"),
+      ...(sdkPath ? { "@pay-skill/sdk": sdkPath } : {}),
     },
     preserveSymlinks: false,
   },
