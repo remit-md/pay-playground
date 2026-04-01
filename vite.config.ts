@@ -39,9 +39,6 @@ export default defineConfig({
       },
     },
   },
-  optimizeDeps: {
-    exclude: ["@pay-skill/sdk"],
-  },
   build: {
     outDir: "dist",
   },
