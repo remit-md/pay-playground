@@ -256,8 +256,8 @@ const x402Flow: FlowSpec = {
           };
         }
 
-        lastTxHash = typeof data === "object" && data !== null && "transactionHash" in data
-          ? String((data as Record<string, unknown>).transactionHash)
+        lastTxHash = typeof data === "object" && data !== null
+          ? String((data as Record<string, unknown>).tx_hash ?? (data as Record<string, unknown>).transactionHash ?? "")
           : "";
 
         return {
