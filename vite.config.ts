@@ -14,6 +14,7 @@ export default defineConfig({
       "node:path": resolve(__dirname, "src/shims/path.ts"),
       "node:os": resolve(__dirname, "src/shims/os.ts"),
       buffer: resolve(__dirname, "src/shims/buffer.ts"),
+      "@pay-skill/sdk": resolve(__dirname, "../sdk/typescript/dist/index.js"),
     },
     preserveSymlinks: false,
   },
@@ -29,6 +30,9 @@ export default defineConfig({
         rewrite: (path: string) => path.replace(/^\/proxy-api/, "/api/v1"),
       },
     },
+  },
+  optimizeDeps: {
+    exclude: ["@pay-skill/sdk"],
   },
   build: {
     outDir: "dist",
