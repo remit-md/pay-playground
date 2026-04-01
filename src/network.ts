@@ -12,6 +12,7 @@ export const isTestnet = network === "testnet";
 
 export interface NetworkConfig {
   apiUrl: string;
+  facilitatorUrl: string;
   chain: string;
   chainId: number;
   routerAddress: string;
@@ -34,6 +35,7 @@ const apiOverride =
 const configs: Record<Network, NetworkConfig> = {
   testnet: {
     apiUrl: apiOverride || "https://testnet.pay-skill.com/api/v1",
+    facilitatorUrl: "https://testnet.pay-skill.com/x402",
     chain: "base-sepolia",
     chainId: 84532,
     routerAddress: "", // Fetched from /contracts on init
@@ -44,6 +46,7 @@ const configs: Record<Network, NetworkConfig> = {
   },
   mainnet: {
     apiUrl: "https://pay-skill.com/api/v1",
+    facilitatorUrl: "https://pay-skill.com/x402",
     chain: "base",
     chainId: 8453,
     routerAddress: "", // Fetched from /contracts on init
