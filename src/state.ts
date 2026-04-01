@@ -36,28 +36,14 @@ export interface PlaygroundState {
 type Listener = (state: PlaygroundState, changedKeys: (keyof PlaygroundState)[]) => void;
 
 export const ALL_WEBHOOK_EVENTS = [
-  "payment.sent",
-  "payment.received",
-  "escrow.funded",
-  "escrow.released",
-  "escrow.cancelled",
-  "escrow.claim_started",
+  "payment.completed",
   "tab.opened",
   "tab.charged",
+  "tab.low_balance",
+  "tab.closing_soon",
   "tab.closed",
-  "stream.opened",
-  "stream.withdrawn",
-  "stream.closed",
-  "bounty.posted",
-  "bounty.submitted",
-  "bounty.awarded",
-  "bounty.reclaimed",
-  "bounty.expired",
-  "deposit.created",
-  "deposit.returned",
-  "deposit.forfeited",
+  "tab.topped_up",
   "x402.settled",
-  "x402.failed",
 ] as const;
 
 // --- localStorage keys ---
