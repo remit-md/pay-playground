@@ -6,7 +6,6 @@
 
 import type { Wallet } from "@pay-skill/sdk";
 import { getState, setState, subscribe, ALL_WEBHOOK_EVENTS } from "../state.js";
-import { net } from "../network.js";
 
 // ── Event categories ────────────────────────────────────────────────────────
 
@@ -17,13 +16,9 @@ interface EventGroup {
 }
 
 const EVENT_GROUPS: EventGroup[] = [
-  { label: "Payment", color: "#2ABFAB", events: ["payment.sent", "payment.received"] },
-  { label: "Escrow",  color: "#5856D6", events: ["escrow.funded", "escrow.released", "escrow.cancelled", "escrow.claim_started"] },
-  { label: "Tab",     color: "#7C3AED", events: ["tab.opened", "tab.charged", "tab.closed"] },
-  { label: "Stream",  color: "#DB2777", events: ["stream.opened", "stream.withdrawn", "stream.closed"] },
-  { label: "Bounty",  color: "#FF9500", events: ["bounty.posted", "bounty.submitted", "bounty.awarded", "bounty.reclaimed", "bounty.expired"] },
-  { label: "Deposit", color: "#34C759", events: ["deposit.created", "deposit.returned", "deposit.forfeited"] },
-  { label: "x402",    color: "#DC2626", events: ["x402.settled", "x402.failed"] },
+  { label: "Payment", color: "#2ABFAB", events: ["payment.completed"] },
+  { label: "Tab",     color: "#7C3AED", events: ["tab.opened", "tab.charged", "tab.low_balance", "tab.closing_soon", "tab.closed", "tab.topped_up"] },
+  { label: "x402",    color: "#DC2626", events: ["x402.settled"] },
 ];
 
 // ── Status types ────────────────────────────────────────────────────────────
@@ -318,10 +313,9 @@ export function buildWebhookModal(
     setStatus("registering", "Registering webhooks...");
 
     try {
-      const chains = [net.chain];
       await Promise.all([
-        agentWallet.registerWebhook(url, events, chains),
-        providerWallet.registerWebhook(url, events, chains),
+        agentWallet.registerWebhook(url, events),
+        providerWallet.registerWebhook(url, events),
       ]);
 
       setState({ webhookUrl: url, webhookEvents: events });
