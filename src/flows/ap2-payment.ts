@@ -93,7 +93,7 @@ const ap2PaymentFlow: FlowSpec = {
           mandateId,
           expiresAt,
           issuer: ctx.agent.address,
-          allowance: { maxAmount: AMT.toFixed(2), currency: "USDC" },
+          allowance: { maxAmount: UNITS, currency: "USDC" },
         };
 
         return {
@@ -157,7 +157,7 @@ const ap2PaymentFlow: FlowSpec = {
           mandateId,
           expiresAt,
           issuer: ctx.agent.address,
-          allowance: { maxAmount: AMT.toFixed(2), currency: "USDC" },
+          allowance: { maxAmount: UNITS, currency: "USDC" },
         };
 
         await ctx.agent.getContracts(); // ensure contracts loaded
@@ -178,12 +178,14 @@ const ap2PaymentFlow: FlowSpec = {
                 {
                   kind: "data",
                   data: {
-                    model: "direct",
-                    to: ctx.provider.address,
-                    amount: AMT.toFixed(2),
-                    memo: "AP2 playground demo",
-                    nonce,
-                    permit,
+                    payment: {
+                      flow: "direct",
+                      to: ctx.provider.address,
+                      amount: UNITS,
+                      memo: "AP2 playground demo",
+                      nonce,
+                      permit,
+                    },
                   },
                 },
               ],
