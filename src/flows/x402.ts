@@ -12,15 +12,14 @@ import type { FlowSpec, FlowContext, StepResult } from "./types.js";
 import { registerFlow } from "./registry.js";
 import { buildWebhookStep } from "./webhook-helper.js";
 import { isTestnet, net } from "../network.js";
-import { getSignerForWallet, randomHex, signRequest } from "../wallet.js";
-import { BASE_URL } from "../api.js";
+import { getSignerForWallet, randomHex } from "../wallet.js";
 
 const SOURCE = "src/flows/x402.ts";
 const AMT = isTestnet ? 5.0 : 0.1;
 const UNITS = AMT * 1_000_000;
 
-/** x402 demo endpoint is under /api/v1 */
-const API_BASE = net.apiUrl;
+/** x402 facilitator base URL (NOT under /api/v1) */
+const X402_BASE = net.facilitatorUrl;
 
 function getEIP3009Domain() {
   return {
@@ -73,7 +72,7 @@ const x402Flow: FlowSpec = {
       sourceFile: SOURCE,
       action: async (): Promise<StepResult> => {
         const t0 = performance.now();
-        const res = await fetch(`${BASE_URL}/x402/supported`);
+        const res = await fetch(`${X402_BASE}/supported`);
         const timeMs = Math.round(performance.now() - t0);
         const data = await res.json().catch(() => ({ status: res.status }));
         if (!res.ok) {
@@ -103,7 +102,7 @@ const x402Flow: FlowSpec = {
       sourceFile: SOURCE,
       action: async (): Promise<StepResult> => {
         const t0 = performance.now();
-        const res = await fetch(`${API_BASE}/x402/demo`);
+        const res = await fetch(`${X402_BASE}/demo`);
         const timeMs = Math.round(performance.now() - t0);
 
         // Parse X-Payment headers from the 402 response
@@ -165,31 +164,31 @@ const x402Flow: FlowSpec = {
         const fee = +(AMT * 0.01).toFixed(2);
         const netAmt = +(AMT - fee).toFixed(2);
 
-        // Build the settle body for the next step
+        // Parse signature into v, r, s components
+        const sigClean = signature.startsWith("0x") ? signature.slice(2) : signature;
+        const sigR = "0x" + sigClean.slice(0, 64);
+        const sigS = "0x" + sigClean.slice(64, 128);
+        const sigV = parseInt(sigClean.slice(128, 130), 16);
+
+        // Build the settle body matching server's SettleRequest format
         lastSettleBody = {
-          paymentPayload: {
-            scheme: "exact",
-            network: net.networkUrn,
-            payload: {
-              signature,
-              authorization: {
-                from: ctx.agent.address,
-                to: net.routerAddress,
-                value: amountStr,
-                validAfter: String(validAfter),
-                validBefore: String(validBefore),
-                nonce: eip3009Nonce,
-              },
-            },
-            x402Version: 1,
+          payment: {
+            from: ctx.agent.address,
+            to: net.routerAddress,
+            amount: UNITS,
+            settlement: "direct",
+            valid_after: String(validAfter),
+            valid_before: String(validBefore),
+            nonce: eip3009Nonce,
+            v: sigV,
+            r: sigR,
+            s: sigS,
           },
-          paymentRequired: {
+          requirements: {
             scheme: "exact",
-            network: net.networkUrn,
-            amount: amountStr,
-            asset: net.usdcAddress,
-            payTo: net.routerAddress,
-            maxTimeoutSeconds: 300,
+            amount: UNITS,
+            to: net.routerAddress,
+            settlement: "direct",
           },
         };
 
@@ -228,12 +227,12 @@ const x402Flow: FlowSpec = {
         "USDC transfer on-chain, and returns the transaction hash.",
       role: "provider",
       sourceFile: SOURCE,
-      action: async (ctx: FlowContext): Promise<StepResult> => {
+      action: async (_ctx: FlowContext): Promise<StepResult> => {
         const t0 = performance.now();
-        const authHeaders = await signRequest(ctx.provider, "POST", "/api/v1/x402/settle");
-        const res = await fetch(`${BASE_URL}/x402/settle`, {
+        // x402 facilitator endpoints are public — no auth headers needed
+        const res = await fetch(`${X402_BASE}/settle`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", ...authHeaders },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(lastSettleBody),
         });
 
@@ -291,7 +290,7 @@ const x402Flow: FlowSpec = {
           headers["X-Payment-Response"] = lastTxHash;
         }
 
-        const res = await fetch(`${API_BASE}/x402/demo`, { headers });
+        const res = await fetch(`${X402_BASE}/demo`, { headers });
         const timeMs = Math.round(performance.now() - t0);
         const data = await res.json().catch(() => null) as Record<string, unknown> | null;
         lastWeatherData = res.ok ? data : null;
@@ -336,7 +335,7 @@ const x402Flow: FlowSpec = {
 
         if (!weather && lastTxHash) {
           // Retry with tx hash
-          const res = await fetch(`${API_BASE}/x402/demo`, {
+          const res = await fetch(`${X402_BASE}/demo`, {
             headers: { "X-Payment-Response": lastTxHash },
           });
           if (res.ok) {
