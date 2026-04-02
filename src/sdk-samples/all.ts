@@ -60,44 +60,44 @@ reg("direct", "pay-direct", {
   typescript: `const result = await agent.payDirect(
   provider.address,
   5.00,
-  "playground demo",
+  "direct-payment:playground",
   { permit }
 );
 // result.invoiceId, result.txHash`,
   python: `result = await agent.pay_direct(
     to=provider.address,
     amount=5.00,
-    memo="playground demo",
+    memo="direct-payment:playground",
     permit=permit,
 )`,
   go: `result, err := agent.Pay(ctx, payskill.PayParams{
     To:     provider.Address,
     Amount: 5.00,
-    Memo:   "playground demo",
+    Memo:   "direct-payment:playground",
 }, payskill.WithPermit(permit))`,
   rust: `let result = agent.pay(PayParams {
     to: provider.address(),
     amount: 5.00,
-    memo: "playground demo".into(),
+    memo: "direct-payment:playground".into(),
 }, Some(permit)).await?;`,
   ruby: `result = agent.pay(
   to: provider.address,
   amount: 5.00,
-  memo: "playground demo",
+  memo: "direct-payment:playground",
   permit: permit,
 )`,
   csharp: `var result = await agent.PayAsync(
-    provider.Address, 5.00m, "playground demo",
+    provider.Address, 5.00m, "direct-payment:playground",
     new PayOptions { Permit = permit });`,
   java: `var result = agent.pay(
-    provider.address(), 5.00, "playground demo",
+    provider.address(), 5.00, "direct-payment:playground",
     PayOptions.withPermit(permit));`,
   swift: `let result = try await agent.pay(
     to: provider.address, amount: 5.00,
-    memo: "playground demo", permit: permit)`,
+    memo: "direct-payment:playground", permit: permit)`,
   elixir: `{:ok, result} = Remitmd.pay(agent,
   to: provider.address, amount: 5.00,
-  memo: "playground demo", permit: permit)`,
+  memo: "direct-payment:playground", permit: permit)`,
 });
 
 // Webhook steps - show payload handling (registration is one-time setup)
@@ -275,17 +275,17 @@ reg("escrow", "sign-permit", {
 
 reg("escrow", "fund-escrow", {
   typescript: `const escrow = await agent.pay(
-  { to: provider.address, amount: 10.00, memo: "playground escrow" },
+  { to: provider.address, amount: 10.00, memo: "escrow-fund:playground" },
   { permit },
 );
 // escrow.invoiceId - use this to release/cancel`,
   python: `from payskill.models.invoice import Invoice
 
-invoice = Invoice(to=provider.address, amount=10.00, memo="playground escrow")
+invoice = Invoice(to=provider.address, amount=10.00, memo="escrow-fund:playground")
 escrow = await agent.pay(invoice, permit=permit)`,
   go: `escrow, err := agent.CreateEscrow(ctx, provider.Address(),
     decimal.NewFromFloat(10.00),
-    payskill.WithEscrowMemo("playground escrow"),
+    payskill.WithEscrowMemo("escrow-fund:playground"),
     payskill.WithEscrowPermit(permit))`,
   rust: `let escrow = agent.create_escrow(
     provider.address(), dec!(10.00),
@@ -293,18 +293,18 @@ escrow = await agent.pay(invoice, permit=permit)`,
 // escrow.invoice_id - use to release/cancel`,
   ruby: `escrow = agent.create_escrow(
   provider.address, 10.00,
-  memo: "playground escrow", permit: permit)`,
+  memo: "escrow-fund:playground", permit: permit)`,
   csharp: `var escrow = await agent.CreateEscrowAsync(
-    provider.Address, 10.00m, "playground escrow",
+    provider.Address, 10.00m, "escrow-fund:playground",
     permit: permit);`,
   java: `var escrow = agent.createEscrow(
     provider.address(), BigDecimal.valueOf(10.00), permit);`,
   swift: `let escrow = try await agent.createEscrow(
     recipient: provider.address, amount: 10.00,
-    conditions: "playground escrow", permit: permit)`,
+    conditions: "escrow-fund:playground", permit: permit)`,
   elixir: `{:ok, escrow} = Remitmd.create_escrow(agent,
   provider.address, 10.00,
-  description: "playground escrow")`,
+  description: "escrow-fund:playground")`,
 });
 
 reg("escrow", "claim-start", {
@@ -1766,7 +1766,7 @@ reg("ap2-payment", "send-message", {
 const a2a = A2AClient.fromCard(card, signer);
 const task = await a2a.send({
   to: provider.address, amount: 10.00,
-  memo: "AP2 payment demo", mandate,
+  memo: "ap2-task-payment:playground", mandate,
 });
 console.log("Task:", task.id, "State:", task.status.state);`,
   python: `from payskill.a2a import A2AClient
@@ -1774,44 +1774,44 @@ console.log("Task:", task.id, "State:", task.status.state);`,
 async with A2AClient.from_wallet(card, agent) as a2a:
     task = await a2a.send(
         to=provider.address, amount=10.00,
-        memo="AP2 payment demo", mandate=mandate)
+        memo="ap2-task-payment:playground", mandate=mandate)
     print(f"Task: {task.id} State: {task.state}")`,
   go: `a2a, err := payskill.A2AClientFromCard(card, signer)
 task, err := a2a.Send(ctx, payskill.SendOptions{
     To: provider.Address, Amount: 10.00,
-    Memo: "AP2 payment demo", Mandate: mandate,
+    Memo: "ap2-task-payment:playground", Mandate: mandate,
 })
 log.Printf("Task: %s State: %s", task.ID, task.Status.State)`,
   rust: `let a2a = A2AClient::from_card(&card, signer);
 let task = a2a.send(SendOptions {
     to: provider.address().into(), amount: 10.00,
-    memo: Some("AP2 payment demo".into()),
+    memo: Some("ap2-task-payment:playground".into()),
     mandate: Some(mandate),
 }).await?;
 println!("Task: {} State: {}", task.id, task.status.state);`,
   ruby: `a2a = Remitmd::A2AClient.from_card(card, signer)
 task = a2a.send(
   to: provider.address, amount: 10.00,
-  memo: "AP2 payment demo", mandate: mandate)
+  memo: "ap2-task-payment:playground", mandate: mandate)
 puts "Task: #{task.id} State: #{task.state}"`,
   csharp: `var a2a = A2AClient.FromCard(card, signer);
 var task = await a2a.SendAsync(
-    provider.Address, 10.00m, "AP2 payment demo", mandate);
+    provider.Address, 10.00m, "ap2-task-payment:playground", mandate);
 Console.WriteLine($"Task: {task.Id} State: {task.Status.State}");`,
   java: `var a2a = A2A.Client.fromCard(card, signer);
 var task = a2a.send(new A2A.SendOptions(
-    provider.address(), 10.00, "AP2 payment demo", mandate));
+    provider.address(), 10.00, "ap2-task-payment:playground", mandate));
 System.out.printf("Task: %s State: %s%n",
     task.id(), task.status().state());`,
   swift: `let a2a = A2AClient.fromCard(card, signer: signer)
 let task = try await a2a.send(A2ASendOptions(
     to: provider.address, amount: 10.00,
-    memo: "AP2 payment demo", mandate: mandate))
+    memo: "ap2-task-payment:playground", mandate: mandate))
 print("Task: \\(task.id) State: \\(task.status.state)")`,
   elixir: `{:ok, a2a} = RemitMd.A2A.Client.from_card(card, signer)
 {:ok, task} = RemitMd.A2A.Client.send(a2a,
   to: provider.address, amount: 10.00,
-  memo: "AP2 payment demo", mandate: mandate)
+  memo: "ap2-task-payment:playground", mandate: mandate)
 IO.puts("Task: #{task.id} State: #{task.state}")`,
 });
 

@@ -182,7 +182,7 @@ const ap2PaymentFlow: FlowSpec = {
                       flow: "direct",
                       to: ctx.provider.address,
                       amount: UNITS,
-                      memo: "AP2 playground demo",
+                      memo: "ap2-task-payment:playground",
                       nonce,
                       permit,
                     },
