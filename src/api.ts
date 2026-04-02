@@ -69,6 +69,18 @@ export async function apiGet<T>(path: string, wallet: Wallet): Promise<T> {
   return data as T;
 }
 
+export async function apiDelete(path: string, wallet: Wallet): Promise<void> {
+  const authHeaders = await signRequest(wallet, "DELETE", `/api/v1${path}`);
+  const start = performance.now();
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "DELETE",
+    headers: authHeaders,
+  });
+  const timeMs = Math.round(performance.now() - start);
+  logRequest("DELETE", path, res.status, timeMs, 0);
+  if (!res.ok && res.status !== 204) throw new ApiError(res.status, null);
+}
+
 export async function apiGetPublic<T>(path: string): Promise<T> {
   const start = performance.now();
   const res = await fetch(`${BASE_URL}${path}`);
