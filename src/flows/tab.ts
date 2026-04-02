@@ -4,12 +4,13 @@
  * Open a pre-funded tab, charge per API call with EIP-712 provider
  * signatures, then close to settle on-chain.
  *
- * States: init -> open -> charging -> closed (terminal)
+ * States: init -> open -> charging -> withdrawing -> closed (terminal)
  */
 
 import { registerFlow } from "./registry.js";
 import type { FlowSpec, FlowContext, StepResult } from "./types.js";
 import { buildWebhookStep } from "./webhook-helper.js";
+import { apiPost } from "../api.js";
 import { isTestnet } from "../network.js";
 
 const LIMIT = isTestnet ? 10.0 : 1.0;
@@ -49,6 +50,7 @@ const tabFlow: FlowSpec = {
     { id: "init", label: "Init" },
     { id: "open", label: "Open" },
     { id: "charging", label: "Charging" },
+    { id: "withdrawing", label: "Withdrawing" },
     { id: "closed", label: "Closed", terminal: true },
   ],
 
@@ -257,7 +259,53 @@ const tabFlow: FlowSpec = {
       },
     },
 
-    // 8. Provider signs close
+    // 8. Withdraw charged funds
+    {
+      id: "withdraw-charged",
+      label: "Provider withdraws charged funds",
+      description:
+        `Provider withdraws the cumulative charged amount ($${(PER_UNIT * 2).toFixed(2)}) from the tab. ` +
+        "A protocol fee is deducted and the net amount is released to the provider. " +
+        "The tab remains open for further charges.",
+      role: "provider",
+      sourceFile: SOURCE,
+      action: async (ctx: FlowContext): Promise<StepResult> => {
+        const t0 = performance.now();
+        const result = await apiPost<{
+          amount_withdrawn: number;
+          fee_deducted: number;
+          total_withdrawn: number;
+          status: string;
+        }>(`/tabs/${lastTabId}/withdraw`, {}, ctx.provider);
+        const timeMs = Math.round(performance.now() - t0);
+        return {
+          request: {
+            method: "POST",
+            url: `/tabs/${lastTabId}/withdraw`,
+          },
+          response: result,
+          timeMs,
+        };
+      },
+    },
+
+    // 9. Webhook: tab.withdrawn
+    buildWebhookStep({
+      id: "webhook-withdrawn",
+      label: "Webhook: tab.withdrawn",
+      description:
+        "Server delivers a tab.withdrawn webhook to both parties. " +
+        "Contains the withdrawn amount, fee deducted, and running total_withdrawn.",
+      role: "system",
+      sourceFile: SOURCE,
+      payload: () => webhookPayload("tab.withdrawn", {
+        amount_withdrawn: PER_UNIT * 2,
+        fee_deducted: PER_UNIT * 2 * 0.01,
+        total_withdrawn: PER_UNIT * 2,
+      }),
+    }),
+
+    // 10. Provider signs close
     {
       id: "sign-close",
       label: "Provider signs final charge for close",
@@ -288,7 +336,7 @@ const tabFlow: FlowSpec = {
       },
     },
 
-    // 9. Agent closes tab
+    // 11. Agent closes tab
     {
       id: "close-tab",
       label: "Agent closes tab",
@@ -320,7 +368,7 @@ const tabFlow: FlowSpec = {
       },
     },
 
-    // 10. Webhook: tab.closed
+    // 12. Webhook: tab.closed
     buildWebhookStep({
       id: "webhook-closed",
       label: "Webhook: tab.closed",
