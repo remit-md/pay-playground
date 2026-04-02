@@ -337,16 +337,16 @@ export function buildWebhookModal(
 
     try {
       // SDK only has registerWebhook - list/delete via raw API
-      const { apiGet, apiPost } = await import("../api.js");
+      const { apiGet, apiDelete } = await import("../api.js");
       const agentHooks = await apiGet<{ id: string }[]>("/webhooks", agentWallet);
       const providerHooks = await apiGet<{ id: string }[]>("/webhooks", providerWallet);
 
       const deletions: Promise<unknown>[] = [];
       for (const hook of agentHooks) {
-        deletions.push(apiPost(`/webhooks/${hook.id}/delete`, {}, agentWallet));
+        deletions.push(apiDelete(`/webhooks/${hook.id}`, agentWallet));
       }
       for (const hook of providerHooks) {
-        deletions.push(apiPost(`/webhooks/${hook.id}/delete`, {}, providerWallet));
+        deletions.push(apiDelete(`/webhooks/${hook.id}`, providerWallet));
       }
 
       await Promise.allSettled(deletions);
