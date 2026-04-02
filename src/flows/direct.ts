@@ -103,7 +103,7 @@ const directFlow: FlowSpec = {
         const tx = await ctx.agent.payDirect(
           ctx.provider.address,
           AMT,
-          "playground demo",
+          "direct-payment:playground",
         );
         const timeMs = performance.now() - t0;
         return {
@@ -113,7 +113,7 @@ const directFlow: FlowSpec = {
             body: {
               to: ctx.provider.address,
               amount: AMT,
-              memo: "playground demo",
+              memo: "direct-payment:playground",
               permit: "(attached)",
             },
           },
@@ -141,7 +141,7 @@ const directFlow: FlowSpec = {
           to: ctx.provider.address,
           amount: UNITS,
           fee: Math.floor(UNITS / 100),
-          memo: "playground demo",
+          memo: "direct-payment:playground",
         },
       }),
     }),
@@ -164,7 +164,7 @@ const directFlow: FlowSpec = {
           to: ctx.provider.address,
           amount: UNITS,
           fee: Math.floor(UNITS / 100),
-          memo: "playground demo",
+          memo: "direct-payment:playground",
         },
       }),
     }),
