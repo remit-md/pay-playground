@@ -209,8 +209,8 @@ const tabFlow: FlowSpec = {
       sourceFile: SOURCE,
       payload: () => webhookPayload("tab.charged", {
         amount: PER_UNIT,
-        cumulative: PER_UNIT,
-        call_count: 1,
+        balance_remaining: LIMIT - PER_UNIT,
+        charge_count: 1,
       }),
     }),
 
@@ -332,6 +332,7 @@ const tabFlow: FlowSpec = {
       payload: () => webhookPayload("tab.closed", {
         total_charged: cumulative,
         call_count: callCount,
+        refunded: LIMIT - cumulative,
       }),
     }),
   ],

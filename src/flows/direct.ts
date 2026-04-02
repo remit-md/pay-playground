@@ -124,51 +124,47 @@ const directFlow: FlowSpec = {
     },
 
     buildWebhookStep({
-      id: "webhook-sent",
-      label: "Expected: payment.sent webhook",
+      id: "webhook-agent",
+      label: "Expected: payment.completed webhook (agent)",
       description:
-        "After the payment confirms on-chain, the server delivers a payment.sent " +
+        "After the payment confirms on-chain, the server delivers a payment.completed " +
         "webhook to the agent's registered URL. Contains tx_hash, from/to addresses, " +
-        "and the USDC amount.",
+        "amount, fee, and memo.",
       role: "agent",
       sdkMethod: "payDirect",
       sourceFile: "src/flows/direct.ts",
       showDelivery: false,
       payload: (ctx) => ({
-        event: "payment.sent",
-        resource_type: "payment",
-        currency: "USDC",
-        testnet: isTestnet,
+        event: "payment.completed",
         data: {
           from: ctx.agent.address,
           to: ctx.provider.address,
-          amount: AMT,
-          amount_units: UNITS,
+          amount: UNITS,
+          fee: Math.floor(UNITS / 100),
+          memo: "playground demo",
         },
       }),
     }),
 
     buildWebhookStep({
-      id: "webhook-received",
-      label: "Expected: payment.received webhook",
+      id: "webhook-provider",
+      label: "Expected: payment.completed webhook (provider)",
       description:
-        "The provider's registered webhook URL receives a payment.received event. " +
-        "Same payload as payment.sent but delivered to the receiving party, enabling " +
-        "the provider to acknowledge receipt and fulfill the service.",
+        "The provider's registered webhook URL also receives a payment.completed event. " +
+        "Same payload — both sides get notified, enabling the provider to acknowledge " +
+        "receipt and fulfill the service.",
       role: "provider",
       sdkMethod: "payDirect",
       sourceFile: "src/flows/direct.ts",
       showDelivery: false,
       payload: (ctx) => ({
-        event: "payment.received",
-        resource_type: "payment",
-        currency: "USDC",
-        testnet: isTestnet,
+        event: "payment.completed",
         data: {
           from: ctx.agent.address,
           to: ctx.provider.address,
-          amount: AMT,
-          amount_units: UNITS,
+          amount: UNITS,
+          fee: Math.floor(UNITS / 100),
+          memo: "playground demo",
         },
       }),
     }),
